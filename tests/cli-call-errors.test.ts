@@ -24,4 +24,27 @@ describe('CLI call error reporting', () => {
     logSpy.mockRestore();
     errorSpy.mockRestore();
   });
+
+  it('emits structured http envelopes for non-auth transport failures', async () => {
+    const { handleCall } = await cliModulePromise;
+    const callTool = vi.fn().mockRejectedValue(new Error('SSE error: Non-200 status code (410)'));
+    const runtime = {
+      callTool,
+      close: vi.fn().mockResolvedValue(undefined),
+    } as unknown as Awaited<ReturnType<typeof import('../src/runtime.js')['createRuntime']>>;
+
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await handleCall(runtime, ['deepwiki.read_wiki_structure', '--output', 'json']);
+
+    const payload = JSON.parse(logSpy.mock.calls.at(-1)?.[0] ?? '{}');
+    expect(payload.issue?.kind).toBe('http');
+    expect(payload.issue?.statusCode).toBe(410);
+    expect(payload.tool).toBe('read_wiki_structure');
+    expect(errorSpy.mock.calls.some((call) => call.join(' ').includes('responded with HTTP 410'))).toBe(true);
+
+    logSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
 });

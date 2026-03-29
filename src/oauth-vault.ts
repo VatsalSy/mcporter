@@ -6,8 +6,6 @@ import type { OAuthClientInformationMixed, OAuthTokens } from '@modelcontextprot
 import type { ServerDefinition } from './config.js';
 import { readJsonFile, writeJsonFile } from './fs-json.js';
 
-const VAULT_PATH = path.join(os.homedir(), '.mcporter', 'credentials.json');
-
 type VaultKey = string;
 
 export interface VaultEntry {
@@ -25,10 +23,14 @@ interface VaultFile {
   entries: Record<VaultKey, VaultEntry>;
 }
 
+function vaultPath(): string {
+  return path.join(os.homedir(), '.mcporter', 'credentials.json');
+}
+
 async function readVault(): Promise<VaultFile> {
   let shouldRewrite = false;
   try {
-    const existing = await readJsonFile<VaultFile>(VAULT_PATH);
+    const existing = await readJsonFile<VaultFile>(vaultPath());
     if (existing && existing.version === 1 && existing.entries && typeof existing.entries === 'object') {
       return existing;
     }
@@ -46,9 +48,10 @@ async function readVault(): Promise<VaultFile> {
 }
 
 async function writeVault(contents: VaultFile): Promise<void> {
-  const dir = path.dirname(VAULT_PATH);
+  const filePath = vaultPath();
+  const dir = path.dirname(filePath);
   await fs.mkdir(dir, { recursive: true });
-  await writeJsonFile(VAULT_PATH, contents);
+  await writeJsonFile(filePath, contents);
 }
 
 export function vaultKeyForDefinition(definition: ServerDefinition): VaultKey {

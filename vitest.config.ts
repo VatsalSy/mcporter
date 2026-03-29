@@ -14,5 +14,8 @@ export default defineConfig({
     // Quiet mode hides console output for passing tests so CLI fixture logs
     // (e.g., the full `mcporter list` banners) don't overwhelm the reporter.
     ...quietReporterOptions,
+    // CLI-heavy suites import the full entrypoint in parallel and can exceed the
+    // default 5s timeout under local load even when behavior is correct.
+    testTimeout: 10_000,
   },
 });

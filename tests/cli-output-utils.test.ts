@@ -116,6 +116,14 @@ describe('printCallOutput format selection', () => {
         expect(String(logged)).toContain("type: 'json'");
       },
     ],
+    [
+      'auto falls back to readable raw output for plain object payloads',
+      'auto',
+      { result: 'Available pages for facebook/react' },
+      (logged: unknown) => {
+        expect(String(logged)).toContain("result: 'Available pages for facebook/react'");
+      },
+    ],
   ] as const)('%s', (_name, format, raw, assertLogged) => {
     const wrapped = createCallResult(raw);
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
